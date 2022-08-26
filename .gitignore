@@ -114,8 +114,5 @@ out
 .yarn/install-state.gz
 .pnp.*
 
-# TS Build output
-dist
-
 # Docs
 docs

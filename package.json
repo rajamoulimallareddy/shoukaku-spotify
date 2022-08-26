@@ -1,6 +1,6 @@
 {
-  "name": "lavasfy",
-  "version": "2.1.2-shoukaku",
+  "name": "shoukaku-spotify",
+  "version": "3.0.0-shoukaku",
   "description": "Spotify album, playlist, and track resolver for Lavalink.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +15,7 @@
     "release": "standard-version",
     "docs": "typedoc"
   },
-  "repository": "https://github.com/Allvaa/lava-spotify",
+  "repository": "https://github.com/rajamoulimallareddy/shoukaku-spotify",
   "author": "Allvaa",
   "license": "MIT",
   "devDependencies": {

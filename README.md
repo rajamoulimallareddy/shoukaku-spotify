@@ -15,7 +15,7 @@ yarn add rajamoulimallareddy/shoukaku-spotify
 ## Example Usage
 
 ```js
-const { SpotifyClient } = require("lavasfy");
+const { SpotifyClient } = require("shoukaku-spotify");
 
 const lavasfy = new SpotifyClient(
   {
