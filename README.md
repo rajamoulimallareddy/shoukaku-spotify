@@ -6,10 +6,10 @@ Spotify album, playlist, and track resolver for Lavalink.
 
 ```sh
 # npm
-npm i lavasfy
+npm i rajamoulimallareddy/shoukaku-spotify
 
 # yarn
-yarn add lavasfy
+yarn add rajamoulimallareddy/shoukaku-spotify
 ```
 
 ## Example Usage
@@ -68,6 +68,7 @@ const lavasfy = new SpotifyClient(
 
 [Documentation](https://allvaa.github.io/lava-spotify "Documentaion")
 
-##Note:
+## Note
+
 This updated version of allvaa/lavasfy & noxzym/lava-spotify
 i have just made small changes other than that rest are from these only
