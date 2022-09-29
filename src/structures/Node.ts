@@ -9,8 +9,6 @@ export default class Node {
     public auth!: string;
     public secure!: boolean;
 
-    private _spotifyClient!: SpotifyClient;
-
     private readonly methods = {
         album: this.resolver.getAlbum.bind(this.resolver),
         playlist: this.resolver.getPlaylist.bind(this.resolver),
@@ -21,8 +19,6 @@ export default class Node {
     };
 
     public constructor(public client: SpotifyClient, options: NodeOptions) {
-        this._spotifyClient = client;
-
         Object.defineProperties(this, {
             id: { value: options.name, enumerable: true },
             url: { value: options.url },
@@ -37,10 +33,7 @@ export default class Node {
      */
     public async load(url: string): Promise<LavalinkTrackResponse | null> {
         const [, type, id] = this.client.spotifyPattern.exec(url) ?? [];
-
-        // Access token by - 
-        //this._spotifyClient.token 
-        
+        let token = this.client.token;
         return this.methods[type as keyof Node['methods']](id);
     }
 }
