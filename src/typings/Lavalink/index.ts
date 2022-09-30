@@ -21,6 +21,8 @@ export interface Track {
         title: string;
         uri: string;
         sourceName: string;
+        authorURI: string;
+        authorHyperLink: string;
     };
 }
 
