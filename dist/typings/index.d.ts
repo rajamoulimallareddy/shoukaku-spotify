@@ -1,25 +1,24 @@
 import { Track } from './Lavalink';
-export type fetchType = 'SCRAPE' | 'API'
 export interface ClientOptions {
     /** Spotify client ID */
-    clientID?: string;
+    clientId?: string;
     /** Spotify client Secret */
     clientSecret?: string;
     /**
      * Maximum pages of playlist to load (each page contains 100 tracks)
      * @default 2
      */
-    playlistLoadLimit?: number;
+    playlistLimit?: number;
     /**
      * This will filter the search to video that only contains audio of the Spotify track (likely)
      * @default false
      */
-    audioOnlyResults?: boolean;
+    audioResults?: boolean;
     /**
      * The original value of title, author, and uri in {@link Track} will be replaced to Spotify's
      * @default false
      */
-    useSpotifyMetadata?: boolean;
+    spotifyMetadata?: boolean;
     /**
      * Auto resolve the Spotify track to Lavalink track
      *
@@ -28,11 +27,11 @@ export interface ClientOptions {
      */
     autoResolve?: boolean;
     /**
-     * fetchStrategy is options for you to fetch data from api or scrape
+     * fetchType is options for you to fetch data from api or scrape
      *
-     * @param 'SCRAPE' | 'API'
+     * @param "SCRAPE" | "API"
      */
-    fetchStrategy?: string;
+    fetchType?: 'API' | 'SCRAPE';
 }
 export interface UnresolvedTrack {
     info: {
@@ -41,6 +40,8 @@ export interface UnresolvedTrack {
         author: string;
         length: number;
         uri: string;
+        authorURI: string;
+        authorHyperLink: string;
     };
     resolve: () => Promise<Track | undefined>;
 }

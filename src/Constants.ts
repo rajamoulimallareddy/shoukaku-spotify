@@ -1,13 +1,13 @@
 import { ClientOptions, NodeOptions } from './typings';
 
 export const DefaultClientOptions: ClientOptions = {
-    clientID: '',
+    clientId: '',
     clientSecret: '',
-    playlistLoadLimit: 2,
-    audioOnlyResults: false,
-    useSpotifyMetadata: false,
+    playlistLimit: 2,
+    audioResults: false,
+    spotifyMetadata: false,
     autoResolve: false,
-    fetchStrategy: 'API' 
+    fetchType: 'API'
 };
 
 export const DefaultNodeOptions: NodeOptions = {
