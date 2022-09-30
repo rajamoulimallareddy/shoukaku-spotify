@@ -31,7 +31,7 @@ export interface ClientOptions {
      *
      * @param "SCRAPE" | "API"
      */
-    fetchType?: 'API' | 'SCRAPE';
+    fetchType?: string;
 }
 export interface UnresolvedTrack {
     info: {
