@@ -1,14 +1,11 @@
 import { UnresolvedTrack } from '..';
-
-export type LoadType = 'TRACK_LOADED' | 'PLAYLIST_LOADED' | 'SEARCH_RESULT' | 'NO_MATCHES' | 'LOAD_FAILED';
-
+export declare type LoadType = 'TRACK_LOADED' | 'PLAYLIST_LOADED' | 'SEARCH_RESULT' | 'NO_MATCHES' | 'LOAD_FAILED';
 export interface NodeOptions {
     name: string;
     url: string;
     auth: string;
     secure?: boolean;
 }
-
 export interface Track {
     track: string;
     info: {
@@ -21,16 +18,13 @@ export interface Track {
         title: string;
         uri: string;
         sourceName: string;
-    }
+    };
 }
-
 export interface LavalinkTrackResponse<T = UnresolvedTrack | Track | null> {
     loadtype: LoadType;
     playlistInfo: {
-        name?: string | undefined | null;
-        // selectedTrack?: number | undefined | null;
+        name?: string;
     };
-    // playlistName: string | undefined | null;
     tracks: T[];
     exception?: {
         message: string;

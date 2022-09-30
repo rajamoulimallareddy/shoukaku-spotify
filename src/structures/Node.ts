@@ -1,6 +1,7 @@
 import SpotifyClient from '../Client';
 import { LavalinkTrackResponse, NodeOptions } from '../typings';
 import Resolver from './Resolver';
+import petitio from 'petitio';
 export default class Node {
     public resolver = new Resolver(this);
 
@@ -32,7 +33,18 @@ export default class Node {
      * @returns Lavalink-like /loadtracks response
      */
     public async load(url: string): Promise<LavalinkTrackResponse | null> {
+        if (!this.client.spotifyPattern.exec(url)) url = await this.keyword_search(url).then((req: any) => req?.tracks?.items[0]?.external_urls.spotify);
         const [, type, id] = this.client.spotifyPattern.exec(url) ?? [];
         return this.methods[type as keyof Node['methods']](id);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+    public async keyword_search(keyword: string) {
+        const result = await petitio('https://api.spotify.com/v1' + `/search?q=${keyword}&type=track&limit=1`, 'GET')
+            .header({
+                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                Authorization: `${this.client.token}`
+            }).json();
+        return result;
     }
 }

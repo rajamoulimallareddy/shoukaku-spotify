@@ -70,7 +70,7 @@ export default class SpotifyClient {
         try {
             const request = await petitio('https://accounts.spotify.com/api/token', 'POST')
                 .header({
-                    Authorization: `Basic ${Buffer.from(this.options.clientID + ":" + this.options.clientSecret).toString("base64")}`, // eslint-disable-line
+                    Authorization: `Basic ${Buffer.from(this.options.clientId + ":" + this.options.clientSecret).toString("base64")}`, // eslint-disable-line
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }).body('grant_type=client_credentials').send();
 

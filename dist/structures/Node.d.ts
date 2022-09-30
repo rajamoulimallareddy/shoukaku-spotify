@@ -1,5 +1,4 @@
 import SpotifyClient from '../Client';
-
 import { LavalinkTrackResponse, NodeOptions } from '../typings';
 import Resolver from './Resolver';
 export default class Node {
@@ -16,4 +15,5 @@ export default class Node {
      * @returns Lavalink-like /loadtracks response
      */
     load(url: string): Promise<LavalinkTrackResponse | null>;
+    keyword_search(keyword: string): Promise<any>;
 }

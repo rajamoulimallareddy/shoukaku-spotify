@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/prefer-readonly */
-/* eslint-disable @typescript-eslint/explicit-member-accessibility */
-import { ClientOptions, NodeOptions } from "./typings";
-import Node from "./structures/Node";
-
+import { ClientOptions, NodeOptions } from './typings';
+import Node from './structures/Node';
 export default class SpotifyClient {
     /** The provided options when the class was instantiated */
     options: Readonly<ClientOptions>;

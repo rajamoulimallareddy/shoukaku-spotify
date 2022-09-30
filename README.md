@@ -19,7 +19,7 @@ const { SpotifyClient } = require("shoukaku-spotify");
 
 const lavasfy = new SpotifyClient(
   {
-    clientID: "a client id",
+    clientId: "a client id",
     clientSecret: "a client secret",
   },
   [
