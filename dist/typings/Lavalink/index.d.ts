@@ -18,8 +18,8 @@ export interface Track {
         title: string;
         uri: string;
         sourceName: string;
-        authorURI: string;
-        authorHyperLink: string;
+        authorURI: string | null;
+        authorHyperLink: string | null;
     };
 }
 export interface LavalinkTrackResponse<T = UnresolvedTrack | Track | null> {
