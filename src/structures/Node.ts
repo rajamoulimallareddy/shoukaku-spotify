@@ -39,7 +39,7 @@ export default class Node {
     }
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
-    public async keyword_search(keyword: string) {
+    public async keyword_search(keyword: string): Promise<any> {
         const result = await petitio('https://api.spotify.com/v1' + `/search?q=${keyword}&type=track&limit=1`, 'GET')
             .header({
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions

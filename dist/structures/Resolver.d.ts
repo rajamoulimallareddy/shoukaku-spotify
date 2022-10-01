@@ -8,6 +8,7 @@ export default class Resolver {
     get token(): string;
     get playlistLimit(): number;
     get autoResolve(): boolean;
+    private extract;
     getTrack(id: string): Promise<LavalinkTrackResponse | any>;
     getPlaylist(id: string): Promise<LavalinkTrackResponse | any>;
     getAlbum(id: string): Promise<LavalinkTrackResponse | any>;
