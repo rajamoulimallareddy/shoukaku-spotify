@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import petitio from 'petitio';
-const fetch = require('isomorphic-unfetch');
-const { getData, getTracks } = require('spotify-url-info')(fetch);
+import Spotify from 'spotify-url-info'
+import { fetch } from 'undici'
+const { getTracks, getData } = Spotify(fetch);
 import { Tracks } from 'spotify-url-info';
 import { Track, LavalinkTrackResponse, SpotifyAlbum, SpotifyArtist, SpotifyPlaylist, SpotifyTrack, UnresolvedTrack, SpotifyEpisode, SpotifyShow } from '../typings';
 import Util from '../Util';
@@ -24,6 +25,11 @@ export default class Resolver {
         return this.node.client.options.autoResolve!;
     }
 
+    private extract(url: any) {
+        var p = /^(?:https:\/\/open\.spotify\.com\/(?:user\/[A-Za-z0-9]+\/)?|spotify:)(album|playlist|track|artist|episode|show)(?:[/:])([A-Za-z0-9]+).*$/;
+        if (url.match(p)) return `https://open.spotify.com/artist/${url.match(p)[2]}`
+    }
+
     public async getTrack(id: string): Promise<LavalinkTrackResponse | any> {
         if (this.node.client.options.fetchType === 'SCRAPE') {
             const tracks = await getTracks(`https://open.spotify.com/track/${id}`);
@@ -41,7 +47,7 @@ export default class Resolver {
             const tracks = await getTracks(`https://open.spotify.com/playlist/${id}`);
             const metaData = await getData(`https://open.spotify.com/playlist/${id}`);
             let unresolvedPlaylistTracks;
-            if (typeof tracks[0].track === 'object') {
+            if (typeof tracks[0] === 'object') {
                 // @ts-expect-error no typings
                 unresolvedPlaylistTracks = tracks.filter(x => x.track).map(track => this.buildUnresolved(track.track));
             } else {
@@ -166,8 +172,8 @@ export default class Resolver {
                 identifier: spotifyTrack.id,
                 title: spotifyTrack.name,
                 author: spotifyTrack.artists ? spotifyTrack.artists.map((x: { name: any }) => x.name).join(', ') : undefined ?? '',
-                authorURI: spotifyTrack.artists ? spotifyTrack.artists.map((x: { external_urls: { spotify: any } }) => x.external_urls.spotify).join(', ') : undefined ?? '',
-                authorHyperLink: spotifyTrack.artists ? spotifyTrack.artists.map((x: any) => `[${x.name}](${x.external_urls.spotify})`).join(', ') : undefined ?? '',
+                authorURI: spotifyTrack.artists ? spotifyTrack.artists.map((x: { uri: any }) => this.extract(x.uri)).join(', ') : undefined ?? '',
+                authorHyperLink: spotifyTrack.artists ? spotifyTrack.artists.map((x: any) => `[${x.name}](${this.extract(x.uri)})`).join(', ') : undefined ?? '',
                 uri: spotifyTrack.external_urls.spotify,
                 length: spotifyTrack.duration_ms
             },
