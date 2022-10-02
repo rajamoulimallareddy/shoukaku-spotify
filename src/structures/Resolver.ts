@@ -46,14 +46,8 @@ export default class Resolver {
         if (this.node.client.options.fetchType === 'SCRAPE') {
             const tracks = await getTracks(`https://open.spotify.com/playlist/${id}`);
             const metaData = await getData(`https://open.spotify.com/playlist/${id}`);
-            let unresolvedPlaylistTracks;
-            if (typeof tracks[0] === 'object') {
-                // @ts-expect-error no typings
-                unresolvedPlaylistTracks = tracks.filter(x => x.track).map(track => this.buildUnresolved(track.track));
-            } else {
-                // @ts-expect-error no typings
-                unresolvedPlaylistTracks = tracks.filter(x => x.track).map(track => this.buildUnresolved(track));
-            }
+            // @ts-expect-error no typings
+            const unresolvedPlaylistTracks = tracks.filter(x => x.track).map(track => this.buildUnresolved(track));
             return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedPlaylistTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedPlaylistTracks, metaData.name);
         }
         if (!this.token) throw new Error('No Spotify access token.');
