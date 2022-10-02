@@ -2,7 +2,6 @@ import { Track, LavalinkTrackResponse } from '../typings';
 import Node from './Node';
 export default class Resolver {
     node: Node;
-    client: import("..").SpotifyClient;
     cache: Map<string, Track>;
     constructor(node: Node);
     get token(): string;

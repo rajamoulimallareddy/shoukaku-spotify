@@ -8,7 +8,6 @@ import { Track, LavalinkTrackResponse, SpotifyAlbum, SpotifyArtist, SpotifyPlayl
 import Util from '../Util';
 import Node from './Node';
 export default class Resolver {
-    public client = this.node.client;
     public cache = new Map<string, Track>();
 
     public constructor(public node: Node) { }
@@ -145,7 +144,9 @@ export default class Resolver {
                 Object.assign(lavaTrack.info, {
                     title: unresolvedTrack.info.title,
                     author: unresolvedTrack.info.author,
-                    uri: unresolvedTrack.info.uri
+                    uri: unresolvedTrack.info.uri,
+                    authorURI: unresolvedTrack.info.authorURI,
+                    authorHyperLink: unresolvedTrack.info.authorHyperLink
                 });
             }
             this.cache.set(unresolvedTrack.info.identifier, Object.freeze(lavaTrack));

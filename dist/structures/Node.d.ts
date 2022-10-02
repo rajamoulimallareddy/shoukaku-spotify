@@ -14,6 +14,6 @@ export default class Node {
      * A method for loading Spotify URLs
      * @returns Lavalink-like /loadtracks response
      */
-    load(url: string): Promise<LavalinkTrackResponse | null>;
-    keyword_search(keyword: string): Promise<any>;
+    load(url: string, limit?: number): Promise<LavalinkTrackResponse | null>;
+    keyword_search(keyword: string, limit?: number): Promise<any>;
 }
