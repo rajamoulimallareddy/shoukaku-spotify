@@ -27,7 +27,7 @@ export interface Track {
 }
 
 export interface LavalinkTrackResponse<T = UnresolvedTrack | Track | null> {
-    loadtype: LoadType;
+    loadType: LoadType;
     playlistInfo: {
         name?: string;
         // selectedTrack?: number;

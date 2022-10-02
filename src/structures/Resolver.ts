@@ -183,10 +183,10 @@ export default class Resolver {
         };
     }
 
-    private buildResponse(loadtype: LavalinkTrackResponse['loadtype'], tracks: Array<UnresolvedTrack | Track> = [], playlistName?: string, exceptionMsg?: string): LavalinkTrackResponse {
+    private buildResponse(loadType: LavalinkTrackResponse['loadType'], tracks: Array<UnresolvedTrack | Track> = [], playlistName?: string, exceptionMsg?: string): LavalinkTrackResponse {
         return Object.assign(
             {
-                loadtype,
+                loadType,
                 tracks,
                 playlistInfo: { name: playlistName }
             },

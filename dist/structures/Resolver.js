@@ -179,9 +179,9 @@ class Resolver {
             }
         };
     }
-    buildResponse(loadtype, tracks = [], playlistName, exceptionMsg) {
+    buildResponse(loadType, tracks = [], playlistName, exceptionMsg) {
         return Object.assign({
-            loadtype,
+            loadType,
             tracks,
             playlistInfo: { name: playlistName }
         }, exceptionMsg ? { exception: { message: exceptionMsg, severity: 'COMMON' } } : {});
