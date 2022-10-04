@@ -30,84 +30,107 @@ export default class Resolver {
     }
 
     public async getTrack(id: string): Promise<LavalinkTrackResponse | any> {
-        if (this.node.client.options.fetchType === 'SCRAPE') {
-            const tracks = await getTracks(`https://open.spotify.com/track/${id}`);
-            const unresolvedTracks = this.buildUnresolved(tracks[0]);
-            return this.buildResponse('TRACK_LOADED', this.autoResolve ? ([await unresolvedTracks.resolve()] as Track[]) : [unresolvedTracks]);
+        try {
+            if (this.node.client.options.fetchType === 'SCRAPE') {
+                const tracks = await getTracks(`https://open.spotify.com/track/${id}`);
+                const unresolvedTracks = this.buildUnresolved(tracks[0]);
+                return this.buildResponse('TRACK_LOADED', this.autoResolve ? ([await unresolvedTracks.resolve()] as Track[]) : [unresolvedTracks]);
+            }
+            if (!this.token) throw new Error('No Spotify access token.');
+            const spotifyTrack: SpotifyTrack = await petitio(`${this.node.client.baseURL}/tracks/${id}`).header('Authorization', this.token).json();
+            const unresolvedTrack = this.buildUnresolved(spotifyTrack as Tracks);
+            return this.buildResponse('TRACK_LOADED', this.autoResolve ? ([await unresolvedTrack.resolve()] as Track[]) : [unresolvedTrack]);
+        } catch (e: any) {
+            return this.buildResponse(e.body?.error.message === "invalid id" ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
-        if (!this.token) throw new Error('No Spotify access token.');
-        const spotifyTrack: SpotifyTrack = await petitio(`${this.node.client.baseURL}/tracks/${id}`).header('Authorization', this.token).json();
-        const unresolvedTrack = this.buildUnresolved(spotifyTrack as Tracks);
-        return this.buildResponse('TRACK_LOADED', this.autoResolve ? ([await unresolvedTrack.resolve()] as Track[]) : [unresolvedTrack]);
     }
 
     public async getPlaylist(id: string): Promise<LavalinkTrackResponse | any> {
-        if (this.node.client.options.fetchType === 'SCRAPE') {
-            const tracks = await getTracks(`https://open.spotify.com/playlist/${id}`);
-            const metaData = await getData(`https://open.spotify.com/playlist/${id}`);
-            // @ts-expect-error no typings
-            const unresolvedPlaylistTracks = tracks.filter(x => x.track).map(track => this.buildUnresolved(track));
-            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedPlaylistTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedPlaylistTracks, metaData.name);
+        try {
+            if (this.node.client.options.fetchType === 'SCRAPE') {
+                const tracks = await getTracks(`https://open.spotify.com/playlist/${id}`);
+                const metaData = await getData(`https://open.spotify.com/playlist/${id}`);
+                // @ts-expect-error no typings
+                const unresolvedPlaylistTracks = tracks.filter(x => x.track).map(track => this.buildUnresolved(track));
+                return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedPlaylistTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedPlaylistTracks, metaData.name);
+            }
+            if (!this.token) throw new Error('No Spotify access token.');
+            const spotifyPlaylist: SpotifyPlaylist = await petitio(`${this.node.client.baseURL}/playlists/${id}`).header('Authorization', this.token).json();
+            await this.getPlaylistTracks(spotifyPlaylist);
+            const unresolvedPlaylistTracks = spotifyPlaylist.tracks.items.filter((x) => x.track !== null).map((x) => this.buildUnresolved(x.track as Tracks));
+            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedPlaylistTracks.map((x: any) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedPlaylistTracks, spotifyPlaylist.name);
+        } catch (e: any) {
+            return this.buildResponse(e.status === 404 ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
-        if (!this.token) throw new Error('No Spotify access token.');
-        const spotifyPlaylist: SpotifyPlaylist = await petitio(`${this.node.client.baseURL}/playlists/${id}`).header('Authorization', this.token).json();
-        await this.getPlaylistTracks(spotifyPlaylist);
-        const unresolvedPlaylistTracks = spotifyPlaylist.tracks.items.filter((x) => x.track !== null).map((x) => this.buildUnresolved(x.track as Tracks));
-        return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedPlaylistTracks.map((x: any) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedPlaylistTracks, spotifyPlaylist.name);
     }
 
     public async getAlbum(id: string): Promise<LavalinkTrackResponse | any> {
-        if (this.node.client.options.fetchType === 'SCRAPE') {
-            const tracks = await getTracks(`https://open.spotify.com/album/${id}`);
-            const metaData = await getData(`https://open.spotify.com/album/${id}`);
-            const unresolvedAlbumTracks = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
-            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedAlbumTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedAlbumTracks, metaData.name);
+        try {
+            if (this.node.client.options.fetchType === 'SCRAPE') {
+                const tracks = await getTracks(`https://open.spotify.com/album/${id}`);
+                const metaData = await getData(`https://open.spotify.com/album/${id}`);
+                const unresolvedAlbumTracks = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
+                return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedAlbumTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedAlbumTracks, metaData.name);
+            }
+            if (!this.token) throw new Error('No Spotify access token.');
+            const spotifyAlbum: SpotifyAlbum = await petitio(`${this.node.client.baseURL}/albums/${id}`, 'GET').header('Authorization', this.token).json();
+            const unresolvedAlbumTracks = spotifyAlbum?.tracks.items.map((track) => this.buildUnresolved(track as Tracks)) ?? [];
+            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedAlbumTracks.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedAlbumTracks, spotifyAlbum.name);
+        } catch (e: any) {
+            return this.buildResponse(e.status === 404 ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
-        if (!this.token) throw new Error('No Spotify access token.');
-        const spotifyAlbum: SpotifyAlbum = await petitio(`${this.node.client.baseURL}/albums/${id}`, 'GET').header('Authorization', this.token).json();
-        const unresolvedAlbumTracks = spotifyAlbum?.tracks.items.map((track) => this.buildUnresolved(track as Tracks)) ?? [];
-        return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedAlbumTracks.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedAlbumTracks, spotifyAlbum.name);
     }
 
     public async getArtist(id: string): Promise<LavalinkTrackResponse | any> {
-        if (this.node.client.options.fetchType === 'SCRAPE') {
-            const tracks = await getTracks(`https://open.spotify.com/artist/${id}`);
-            const metaData = await getData(`https://open.spotify.com/artist/${id}`);
-            const unresolvedArtistTracks = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
-            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedArtistTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedArtistTracks, metaData.name);
+        try {
+            if (this.node.client.options.fetchType === 'SCRAPE') {
+                const tracks = await getTracks(`https://open.spotify.com/artist/${id}`);
+                const metaData = await getData(`https://open.spotify.com/artist/${id}`);
+                const unresolvedArtistTracks = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
+                return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedArtistTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedArtistTracks, metaData.name);
+            }
+            if (!this.token) throw new Error('No Spotify access token.');
+            const metaData = await petitio(`${this.node.client.baseURL}/artists/${id}`).header('Authorization', this.token).json();
+            const spotifyArtis: SpotifyArtist = await petitio(`${this.node.client.baseURL}/artists/${id}/top-tracks`).query('country', 'US').header('Authorization', this.token).json();
+            const unresolvedArtistTracks = spotifyArtis.tracks.map(track => track && this.buildUnresolved(track as Tracks)) ?? [];
+            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedArtistTracks.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedArtistTracks, metaData.name);
+        } catch (e: any) {
+            return this.buildResponse(e.status === 404 ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
-        if (!this.token) throw new Error('No Spotify access token.');
-        const metaData = await petitio(`${this.node.client.baseURL}/artists/${id}`).header('Authorization', this.token).json();
-        const spotifyArtis: SpotifyArtist = await petitio(`${this.node.client.baseURL}/artists/${id}/top-tracks`).query('country', 'US').header('Authorization', this.token).json();
-        const unresolvedArtistTracks = spotifyArtis.tracks.map(track => track && this.buildUnresolved(track as Tracks)) ?? [];
-        return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedArtistTracks.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedArtistTracks, metaData.name);
-
     }
 
     public async getEpisode(id: string): Promise<LavalinkTrackResponse | any> {
-        if (this.node.client.options.fetchType === 'SCRAPE') {
-            const tracks = await getTracks(`https://open.spotify.com/episode/${id}`);
-            const metaData = await getData(`https://open.spotify.com/episode/${id}`);
-            const unresolvedEpisodeTracks = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
-            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedEpisodeTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedEpisodeTracks, metaData.name);
+        try {
+            if (this.node.client.options.fetchType === 'SCRAPE') {
+                const tracks = await getTracks(`https://open.spotify.com/episode/${id}`);
+                const metaData = await getData(`https://open.spotify.com/episode/${id}`);
+                const unresolvedEpisodeTracks = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
+                return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedEpisodeTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedEpisodeTracks, metaData.name);
+            }
+            if (!this.token) throw new Error('No Spotify access token.');
+            const metaData: SpotifyEpisode = await petitio(`${this.node.client.baseURL}/episodes/${id}`, 'GET').query('market', 'US').header('Authorization', this.token).json();
+            return this.getShow(metaData.show.id);
+        } catch (e: any) {
+            return this.buildResponse(e.status === 404 ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
-        if (!this.token) throw new Error('No Spotify access token.');
-        const metaData: SpotifyEpisode = await petitio(`${this.node.client.baseURL}/episodes/${id}`, 'GET').query('market', 'US').header('Authorization', this.token).json();
-        return this.getShow(metaData.show.id);
     }
 
     public async getShow(id: string): Promise<LavalinkTrackResponse | any> {
-        if (this.node.client.options.fetchType === 'SCRAPE') {
-            const tracks = await getTracks(`https://open.spotify.com/show/${id}`);
-            const metaData = await getData(`https://open.spotify.com/show/${id}`);
-            const unresolvedShowEpisodes = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
-            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedShowEpisodes.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedShowEpisodes, metaData.name);
+        try {
+            if (this.node.client.options.fetchType === 'SCRAPE') {
+                const tracks = await getTracks(`https://open.spotify.com/show/${id}`);
+                const metaData = await getData(`https://open.spotify.com/show/${id}`);
+                const unresolvedShowEpisodes = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
+                return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedShowEpisodes.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedShowEpisodes, metaData.name);
+            }
+            if (!this.token) throw new Error('No Spotify access token.');
+            const spotifyShow: SpotifyShow = await petitio(`${this.node.client.baseURL}/shows/${id}`).query('market', 'US').header('Authorization', this.token).json();
+            await this.getShowEpisodes(spotifyShow);
+            const unresolvedShowEpisodes = spotifyShow.episodes.items.map((x) => this.buildUnresolved(x as any));
+            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedShowEpisodes.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedShowEpisodes, spotifyShow.name);
+        } catch (e: any) {
+            return this.buildResponse(e.status === 404 ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
-        if (!this.token) throw new Error('No Spotify access token.');
-        const spotifyShow: SpotifyShow = await petitio(`${this.node.client.baseURL}/shows/${id}`).query('market', 'US').header('Authorization', this.token).json();
-        await this.getShowEpisodes(spotifyShow);
-        const unresolvedShowEpisodes = spotifyShow.episodes.items.map((x) => this.buildUnresolved(x as any));
-        return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedShowEpisodes.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedShowEpisodes, spotifyShow.name);
     }
 
     private async getShowEpisodes(spotifyShow: SpotifyShow): Promise<void> {
@@ -183,7 +206,7 @@ export default class Resolver {
             {
                 loadType,
                 tracks,
-                playlistInfo: { name: playlistName }
+                playlistInfo: playlistName ? { name: playlistName } : {}
             },
             exceptionMsg ? { exception: { message: exceptionMsg, severity: 'COMMON' } } : {}
         );
