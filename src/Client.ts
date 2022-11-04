@@ -1,7 +1,7 @@
 import { ClientOptions, NodeOptions } from './typings';
 import Node from './structures/Node';
 import Util from './Util';
-import petitio from 'petitio';
+import { fetch } from 'undici';
 import { DefaultClientOptions, DefaultNodeOptions } from './Constants';
 
 export default class SpotifyClient {
@@ -15,7 +15,6 @@ export default class SpotifyClient {
     public readonly spotifyPattern!: RegExp;
     /** The token to access the Spotify API */
     public readonly token!: string | null;
-
 
     private nextRequest?: NodeJS.Timeout;
 
@@ -68,14 +67,16 @@ export default class SpotifyClient {
         if (this.nextRequest) return;
 
         try {
-            const request = await petitio('https://accounts.spotify.com/api/token', 'POST')
-                .header({
-                    Authorization: `Basic ${Buffer.from(this.options.clientId + ":" + this.options.clientSecret).toString("base64")}`, // eslint-disable-line
+            const authOptions = {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${Buffer.from(this.options.clientId + ":" + this.options.clientSecret).toString("base64")}`,
                     'Content-Type': 'application/x-www-form-urlencoded'
-                }).body('grant_type=client_credentials').send();
-
+                }
+            };
+            const request: any = await fetch('https://accounts.spotify.com/api/token?grant_type=client_credentials', authOptions);
             if (request.statusCode === 400) return Promise.reject(new Error('Invalid Spotify Client'));
-            const { access_token, token_type, expires_in }: { access_token: string; token_type: string; expires_in: number } = request.json();
+            const { access_token, token_type, expires_in }: { access_token: string; token_type: string; expires_in: number } = await request.json();
             Object.defineProperty(this, 'token', {
                 value: `${token_type} ${access_token}`
             });

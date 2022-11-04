@@ -1,7 +1,7 @@
 import SpotifyClient from '../Client';
 import { LavalinkTrackResponse, NodeOptions } from '../typings';
 import Resolver from './Resolver';
-import petitio from 'petitio';
+import { fetch } from 'undici';
 export default class Node {
     public resolver = new Resolver(this);
 
@@ -40,11 +40,10 @@ export default class Node {
 
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
     public async keyword_search(keyword: string, limit: number = 1): Promise<any> {
-        const result = await petitio('https://api.spotify.com/v1' + `/search?q=${keyword}&type=track&limit=${limit}`, 'GET')
-            .header({
-                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                Authorization: `${this.client.token}`
-            }).json();
-        return result;
+        const result = await fetch('https://api.spotify.com/v1' + `/search?q=${keyword}&type=track&limit=${limit}`, {
+            method: 'GET',
+            headers: { Authorization: `${this.client.token}` }
+        });
+        return await result.json();
     }
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import petitio from 'petitio';
+// import petitio from 'petitio';
 import Spotify from 'spotify-url-info'
 import { fetch } from 'undici'
 const { getTracks, getData } = Spotify(fetch);
@@ -37,7 +37,8 @@ export default class Resolver {
                 return this.buildResponse('TRACK_LOADED', this.autoResolve ? ([await unresolvedTracks.resolve()] as Track[]) : [unresolvedTracks]);
             }
             if (!this.token) throw new Error('No Spotify access token.');
-            const spotifyTrack: SpotifyTrack = await petitio(`${this.node.client.baseURL}/tracks/${id}`).header('Authorization', this.token).json();
+            const response: any = await fetch(`${this.node.client.baseURL}/tracks/${id}`, { headers: { Authorization: this.token } });
+            const spotifyTrack: SpotifyTrack = await response.json();
             const unresolvedTrack = this.buildUnresolved(spotifyTrack as Tracks);
             return this.buildResponse('TRACK_LOADED', this.autoResolve ? ([await unresolvedTrack.resolve()] as Track[]) : [unresolvedTrack]);
         } catch (e: any) {
@@ -55,7 +56,8 @@ export default class Resolver {
                 return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedPlaylistTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedPlaylistTracks, metaData.name);
             }
             if (!this.token) throw new Error('No Spotify access token.');
-            const spotifyPlaylist: SpotifyPlaylist = await petitio(`${this.node.client.baseURL}/playlists/${id}`).header('Authorization', this.token).json();
+            const response: any = await fetch(`${this.node.client.baseURL}/playlists/${id}`, { headers: { Authorization: this.token } });
+            const spotifyPlaylist: SpotifyPlaylist = await response.json();
             await this.getPlaylistTracks(spotifyPlaylist);
             const unresolvedPlaylistTracks = spotifyPlaylist.tracks.items.filter((x) => x.track !== null).map((x) => this.buildUnresolved(x.track as Tracks));
             return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedPlaylistTracks.map((x: any) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedPlaylistTracks, spotifyPlaylist.name);
@@ -73,7 +75,8 @@ export default class Resolver {
                 return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedAlbumTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedAlbumTracks, metaData.name);
             }
             if (!this.token) throw new Error('No Spotify access token.');
-            const spotifyAlbum: SpotifyAlbum = await petitio(`${this.node.client.baseURL}/albums/${id}`, 'GET').header('Authorization', this.token).json();
+            const response: any = await fetch(`${this.node.client.baseURL}/albums/${id}`, { headers: { Authorization: this.token } });
+            const spotifyAlbum: SpotifyAlbum = await response.json();
             const unresolvedAlbumTracks = spotifyAlbum?.tracks.items.map((track) => this.buildUnresolved(track as Tracks)) ?? [];
             return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedAlbumTracks.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedAlbumTracks, spotifyAlbum.name);
         } catch (e: any) {
@@ -88,12 +91,14 @@ export default class Resolver {
                 const metaData = await getData(`https://open.spotify.com/artist/${id}`);
                 const unresolvedArtistTracks = tracks.map((track: any) => track && this.buildUnresolved(track)) ?? [];
                 return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedArtistTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedArtistTracks, metaData.name);
-            }
+            };
             if (!this.token) throw new Error('No Spotify access token.');
-            const metaData = await petitio(`${this.node.client.baseURL}/artists/${id}`).header('Authorization', this.token).json();
-            const spotifyArtis: SpotifyArtist = await petitio(`${this.node.client.baseURL}/artists/${id}/top-tracks`).query('country', 'US').header('Authorization', this.token).json();
+            const metaData = await fetch(`${this.node.client.baseURL}/artists/${id}`, { headers: { Authorization: this.token } });
+            const meta_data: any = await metaData.json();
+            const response: any = await fetch(`${this.node.client.baseURL}/artists/${id}/top-tracks?country=US`, { headers: { Authorization: this.token } });
+            const spotifyArtis: SpotifyArtist = await response.json();
             const unresolvedArtistTracks = spotifyArtis.tracks.map(track => track && this.buildUnresolved(track as Tracks)) ?? [];
-            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedArtistTracks.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedArtistTracks, metaData.name);
+            return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedArtistTracks.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedArtistTracks, meta_data.name);
         } catch (e: any) {
             return this.buildResponse(e.status === 404 ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
         }
@@ -108,7 +113,8 @@ export default class Resolver {
                 return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedEpisodeTracks.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedEpisodeTracks, metaData.name);
             }
             if (!this.token) throw new Error('No Spotify access token.');
-            const metaData: SpotifyEpisode = await petitio(`${this.node.client.baseURL}/episodes/${id}`, 'GET').query('market', 'US').header('Authorization', this.token).json();
+            const response: any = await fetch(`${this.node.client.baseURL}/episodes/${id}?market=US`, { method: 'GET', headers: { Authorization: this.token } });
+            const metaData: SpotifyEpisode = await response.json();
             return this.getShow(metaData.show.id);
         } catch (e: any) {
             return this.buildResponse(e.status === 404 ? "NO_MATCHES" : "LOAD_FAILED", [], undefined, e.body?.error.message ?? e.message);
@@ -124,7 +130,8 @@ export default class Resolver {
                 return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedShowEpisodes.map((x: { resolve: () => any }) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedShowEpisodes, metaData.name);
             }
             if (!this.token) throw new Error('No Spotify access token.');
-            const spotifyShow: SpotifyShow = await petitio(`${this.node.client.baseURL}/shows/${id}`).query('market', 'US').header('Authorization', this.token).json();
+            const response: any = await fetch(`${this.node.client.baseURL}/shows/${id}?market=US`, { headers: { Authorization: this.token } })
+            const spotifyShow: SpotifyShow = response.json();
             await this.getShowEpisodes(spotifyShow);
             const unresolvedShowEpisodes = spotifyShow.episodes.items.map((x) => this.buildUnresolved(x as any));
             return this.buildResponse('PLAYLIST_LOADED', this.autoResolve ? ((await Promise.all(unresolvedShowEpisodes.map((x) => x.resolve()))).filter(Boolean) as Track[]) : unresolvedShowEpisodes, spotifyShow.name);
@@ -137,8 +144,8 @@ export default class Resolver {
         let nextPage = spotifyShow.episodes.next;
         let pageLoaded = 1;
         while (nextPage && (this.playlistLimit === 0 ? true : pageLoaded < this.playlistLimit)) {
-            const spotifyEpisodePage: SpotifyShow['episodes'] = await petitio(nextPage).header('Authorization', this.token).json();
-
+            const response: any = await fetch(nextPage, { headers: { Authorization: this.token } });
+            const spotifyEpisodePage: SpotifyShow['episodes'] = await response.json();
             spotifyShow.episodes.items.push(...spotifyEpisodePage.items);
             nextPage = spotifyEpisodePage.next;
             pageLoaded++;
@@ -149,7 +156,8 @@ export default class Resolver {
         let nextPage = spotifyPlaylist.tracks.next;
         let pageLoaded = 1;
         while (nextPage && (this.playlistLimit === 0 ? true : pageLoaded < this.playlistLimit)) {
-            const spotifyPlaylistPage: SpotifyPlaylist['tracks'] = await petitio(nextPage).header('Authorization', this.token).json();
+            const response: any = await fetch(nextPage, { headers: { Authorization: this.token } });
+            const spotifyPlaylistPage: SpotifyPlaylist['tracks'] = await response.json();
 
             spotifyPlaylist.tracks.items.push(...spotifyPlaylistPage.items);
             nextPage = spotifyPlaylistPage.next;
@@ -179,8 +187,9 @@ export default class Resolver {
 
     private async retrieveTrack(unresolvedTrack: UnresolvedTrack): Promise<Track | undefined> {
         const params = new URLSearchParams({ identifier: `ytsearch:${unresolvedTrack.info.author} - ${unresolvedTrack.info.title} ${this.node.client.options.audioResults ? 'Audio' : ''}` });
-        const response: LavalinkTrackResponse<Track> = await petitio(`http${this.node.secure ? 's' : ''}://${this.node.url}/loadtracks?${params.toString()}`).header('Authorization', this.node.auth).json();
-        return response.tracks[0];
+        const request = await fetch(`http${this.node.secure ? 's' : ''}://${this.node.url}/loadtracks?${params.toString()}`, { headers: { Authorization: this.node.auth } });
+        const response: LavalinkTrackResponse<Track> = await request.json();
+        return await response.tracks[0];
     }
 
     private buildUnresolved(spotifyTrack: Tracks): UnresolvedTrack {

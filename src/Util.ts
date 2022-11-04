@@ -23,8 +23,8 @@ export default class Util {
 
     public static mergeDefault<T>(def: T, prov: T): T {
         const merged = { ...def, ...prov };
-        const defKeys = Object.keys(def);
-        for (const mergedKey of Object.keys(merged)) {
+        const defKeys = Object.keys(def as any);
+        for (const mergedKey of Object.keys(merged as any)) {
             if (!defKeys.includes(mergedKey)) delete (merged as any)[mergedKey];
         }
         return merged;
